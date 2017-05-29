@@ -1,0 +1,13 @@
+
+#include<stdio.h>
+
+#define SIMULATION
+#include"Adachi.h"
+#undef  SIMULATION
+
+int main(void){
+	std::vector<Adachi<8>::vec> goal = {Adachi<8>::vec(8,8)};
+	Adachi<8> solver(goal);
+
+	solver.print();	
+}

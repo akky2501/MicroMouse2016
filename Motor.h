@@ -1,0 +1,73 @@
+
+#pragma once
+
+
+int16_t clamp(int16_t x, int16_t min, int16_t max){
+	return x < min ? min : ( x > max ? max : x);
+}
+
+class Motors{
+public:
+	Motors(uint16_t frequency, uint16_t resolution)
+	: max_compare(resolution)
+	{
+		tim.setTimeBaseByFrequency(frequency*resolution,resolution-1);
+		
+		tim.TimerChannel1Feature<>::initCompareForPwmOutput();
+		tim.TimerChannel2Feature<>::initCompareForPwmOutput();
+		tim.TimerChannel3Feature<>::initCompareForPwmOutput();
+		tim.TimerChannel4Feature<>::initCompareForPwmOutput();
+
+		tim.enablePeripheral();
+	}
+
+	void set(int16_t l,int16_t r){
+		l = clamp(l,-max_compare,max_compare);
+		if(l >= 0){
+			tim.TimerChannel1Feature<>::setCompare(max_compare-l);
+			tim.TimerChannel2Feature<>::setCompare(max_compare);
+		}
+		else{
+			tim.TimerChannel1Feature<>::setCompare(max_compare);
+			tim.TimerChannel2Feature<>::setCompare(max_compare-(-l));
+		}
+		
+		r = clamp(r,-max_compare,max_compare);
+		if(r >= 0){
+			tim.TimerChannel3Feature<>::setCompare(max_compare);
+			tim.TimerChannel4Feature<>::setCompare(max_compare-r);
+		}
+		else{
+			tim.TimerChannel3Feature<>::setCompare(max_compare-(-r));
+			tim.TimerChannel4Feature<>::setCompare(max_compare);
+		}
+
+	}
+
+	void free(void){
+		tim.TimerChannel1Feature<>::setCompare(0);
+		tim.TimerChannel2Feature<>::setCompare(0);
+
+		tim.TimerChannel3Feature<>::setCompare(0);
+		tim.TimerChannel4Feature<>::setCompare(0);
+
+	}
+
+private:
+	Timer2<
+		Timer2InternalClockFeature,
+	    TimerChannel1Feature<>,
+		TimerChannel2Feature<>,
+		TimerChannel3Feature<>,
+		TimerChannel4Feature<>,
+		Timer2GpioFeature<
+			TIMER_REMAP_NONE,
+			TIM2_CH1_OUT,
+			TIM2_CH2_OUT,
+			TIM2_CH3_OUT,
+			TIM2_CH4_OUT
+		>
+	> tim;
+
+	const int16_t max_compare;
+};
